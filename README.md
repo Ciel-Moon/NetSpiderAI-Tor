@@ -1,4 +1,14 @@
 # NetSpiderAI-Tor
+
+Declaration：
+👋 Hi, I'm the author
+Hello! I'm an 8th grader from China, and this is my personal project — I'm working hard on the coding part 🚀
+Since I'm still learning, the code might not be perfect, and updates may be a bit slow (school comes first 😅), but I'll do my best to maintain it.
+If you spot any issues or have suggestions, feel free to reach out. Thanks so much for your understanding and support!
+📧 Contact: Cedric-Shadow@outlook.com
+
+Now,the main text follows below.
+
 NetSpiderAI-Tor: The Next-Generation Anonymous Web Crawler Browser
 
 NetSpiderAI-Tor is a revolutionary, enterprise-grade web crawler that combines the privacy architecture of the Tor Browser with advanced AI‑driven crawling capabilities. It provides a clean, browser-like graphical interface, robust anonymity features, and a full suite of tools for large‑scale data extraction.
