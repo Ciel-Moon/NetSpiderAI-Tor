@@ -1,0 +1,118 @@
+import customtkinter as ctk
+from tkinter import messagebox
+import threading
+
+from gui.browser_tab import BrowserTab
+from gui.task_panel import TaskPanel
+from gui.settings_dialog import SettingsDialog
+from core.tor_manager import TorManager
+from core.crawler_engine import DynamicCrawler
+from core.proxy_pool import ProxyPool
+from core.scheduler import DistributedScheduler
+from storage.database import Database
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
+
+class MainWindow(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+        self.title("NetSpiderAI-Tor")
+        self.geometry("1200x800")
+        ctk.set_appearance_mode("system")
+        ctk.set_default_color_theme("blue")
+
+        # Core components (lazy init)
+        self.tor_manager = None
+        self.proxy_pool = ProxyPool()  # always available
+        self.crawler = None
+        self.scheduler = None
+        self.db = Database()
+
+        self._init_ui()
+
+    def _init_ui(self):
+        # Tab view
+        self.tabview = ctk.CTkTabview(self)
+        self.tabview.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Browser tab
+        self.browser_tab = BrowserTab(self.tabview.add("Browser"), self)
+        # Task monitor tab
+        self.task_panel = TaskPanel(self.tabview.add("Task Monitor"), self)
+        # Settings tab (we'll embed settings inside a frame for simplicity)
+        self.settings_frame = ctk.CTkFrame(self.tabview.add("Settings"))
+        self.settings_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        self._build_settings_tab()
+
+        # Menu
+        self._create_menu()
+
+    def _create_menu(self):
+        # Simple top bar with buttons
+        top_frame = ctk.CTkFrame(self, height=40)
+        top_frame.pack(fill="x", padx=10, pady=5)
+
+        ctk.CTkButton(top_frame, text="Settings", command=self.open_settings_dialog).pack(side="left", padx=5)
+        ctk.CTkButton(top_frame, text="Start Tor", command=self.start_tor).pack(side="left", padx=5)
+        ctk.CTkButton(top_frame, text="Stop Tor", command=self.stop_tor).pack(side="left", padx=5)
+
+    def _build_settings_tab(self):
+        # Placeholder settings inside the tab (full dialog for advanced)
+        ctk.CTkLabel(self.settings_frame, text="Basic Settings", font=("Arial", 16)).pack(pady=10)
+        # Engine selection
+        engine_frame = ctk.CTkFrame(self.settings_frame)
+        engine_frame.pack(fill="x", pady=5)
+        ctk.CTkLabel(engine_frame, text="Rendering Engine:").pack(side="left", padx=5)
+        self.engine_var = ctk.StringVar(value="playwright")
+        ctk.CTkOptionMenu(engine_frame, values=["playwright", "selenium", "requests"],
+                          variable=self.engine_var).pack(side="left", padx=5)
+
+        # Tor ports
+        port_frame = ctk.CTkFrame(self.settings_frame)
+        port_frame.pack(fill="x", pady=5)
+        ctk.CTkLabel(port_frame, text="Tor SOCKS Port:").pack(side="left", padx=5)
+        self.tor_socks_port = ctk.CTkEntry(port_frame, width=80)
+        self.tor_socks_port.insert(0, "9050")
+        self.tor_socks_port.pack(side="left", padx=5)
+
+        ctk.CTkLabel(port_frame, text="Control Port:").pack(side="left", padx=5)
+        self.tor_control_port = ctk.CTkEntry(port_frame, width=80)
+        self.tor_control_port.insert(0, "9051")
+        self.tor_control_port.pack(side="left", padx=5)
+
+        ctk.CTkButton(self.settings_frame, text="Save", command=self.save_settings).pack(pady=10)
+
+    def open_settings_dialog(self):
+        SettingsDialog(self)
+
+    def save_settings(self):
+        # Update settings module or pass to components
+        # For simplicity, we just log
+        logger.info("Settings saved (not implemented fully)")
+
+    def start_tor(self):
+        if not self.tor_manager:
+            self.tor_manager = TorManager(
+                socks_port=int(self.tor_socks_port.get()),
+                control_port=int(self.tor_control_port.get())
+            )
+            threading.Thread(target=self.tor_manager.start_tor, daemon=True).start()
+            messagebox.showinfo("Tor", "Tor started in background.")
+        else:
+            messagebox.showwarning("Tor", "Tor already running.")
+
+    def stop_tor(self):
+        if self.tor_manager:
+            self.tor_manager.stop_tor()
+            self.tor_manager = None
+            messagebox.showinfo("Tor", "Tor stopped.")
+        else:
+            messagebox.showwarning("Tor", "Tor not running.")
+
+    def get_crawler(self):
+        """Return a crawler instance configured with current settings."""
+        if self.tor_manager:
+            return DynamicCrawler(engine=self.engine_var.get(), tor_manager=self.tor_manager)
+        else:
+            return DynamicCrawler(engine=self.engine_var.get(), proxy_pool=self.proxy_pool)
