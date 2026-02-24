@@ -1,0 +1,29 @@
+# Core
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# Dynamic rendering
+selenium>=4.15.0
+playwright>=1.40.0
+webdriver-manager>=4.0.0
+
+# Tor
+stem>=1.8.0
+pysocks>=1.7.1
+
+# Messaging
+pika>=1.3.0
+
+# GUI
+customtkinter>=5.2.0
+Pillow>=10.0.0
+
+# Database
+sqlalchemy>=2.0.0
+
+# Utilities
+fake-useragent>=1.4.0
+tenacity>=8.2.0
+aiohttp>=3.9.0
+python-dotenv>=1.0.0
